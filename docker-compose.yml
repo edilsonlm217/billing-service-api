@@ -1,16 +1,42 @@
+version: "3.8"
 
 services:
-  postgres:
-    image: postgres:16.4-alpine
-    container_name: next_saas_starter_postgres
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  app:
+    build: .
+    container_name: billing-app
+    restart: unless-stopped
     ports:
-      - "54322:5432"
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_URL=${POSTGRES_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - BASE_URL=${BASE_URL}
+      - AUTH_SECRET=${AUTH_SECRET}
+    depends_on:
+      - db
+    networks:
+      - internal_network
+
+  db:
+    image: postgres:15
+    container_name: billing-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - internal_network
 
 volumes:
-  postgres_data:
+  pgdata:
+
+networks:
+  internal_network:
+    external: true
