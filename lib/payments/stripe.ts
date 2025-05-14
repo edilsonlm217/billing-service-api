@@ -24,7 +24,6 @@ export async function createCheckoutSession({
     redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
   }
 
-  console.log('success_url: ', `${process.env.BASE_URL}/api/stripe/checkout?session_id={CHECKOUT_SESSION_ID}`);
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     line_items: [
