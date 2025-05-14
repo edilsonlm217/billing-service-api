@@ -15,8 +15,6 @@ services:
         POSTGRES_DB: ${POSTGRES_DB}
     container_name: billing-app
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - POSTGRES_URL=${POSTGRES_URL}
