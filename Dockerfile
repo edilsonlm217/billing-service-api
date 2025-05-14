@@ -31,7 +31,6 @@ RUN npm install -g pnpm
 RUN pnpm store prune
 
 # Copiar o arquivo de lock e o package.json primeiro
-# Isso é feito para que o Docker possa cachear essas camadas
 COPY package.json pnpm-lock.yaml ./
 
 # Instalar dependências com pnpm
@@ -43,8 +42,11 @@ COPY . .
 # Rodar o build da aplicação
 RUN pnpm run build
 
-# Definir a porta que a aplicação vai expor
+# Executar as migrations antes de rodar o app
+RUN pnpm db:migrate
+
+# Expor a porta da aplicação
 EXPOSE 3000
 
-# Definir o comando para rodar a aplicação
+# Rodar a aplicação
 CMD ["pnpm", "start"]
