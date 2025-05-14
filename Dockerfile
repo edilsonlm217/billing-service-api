@@ -42,11 +42,8 @@ COPY . .
 # Rodar o build da aplicação
 RUN pnpm run build
 
-# Executar as migrations antes de rodar o app
-RUN pnpm db:migrate
-
 # Expor a porta da aplicação
 EXPOSE 3000
 
-# Rodar a aplicação
-CMD ["pnpm", "start"]
+# Rodar migrations na inicialização do container
+CMD ["sh", "-c", "pnpm db:migrate && pnpm start"]
