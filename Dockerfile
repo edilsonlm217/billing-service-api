@@ -1,26 +1,30 @@
-# Use the official Node.js image.
+# Use uma imagem base do Node.js
 FROM node:20-alpine
 
-# Set the working directory in the container
+# Defina o diretório de trabalho no container
 WORKDIR /app
 
-# Install pnpm using npm (it vai funcionar bem no Linux)
+# Instale o pnpm globalmente
 RUN npm install -g pnpm
 
-# Copy the package.json and pnpm-lock.yaml files
+# Limpar cache do pnpm para evitar dependências corrompidas
+RUN pnpm store prune
+
+# Copiar o arquivo de lock e o package.json primeiro
+# Isso é feito para que o Docker possa cachear essas camadas
 COPY package.json pnpm-lock.yaml ./
 
-# Install the dependencies
-RUN pnpm install
+# Instalar dependências com pnpm
+RUN pnpm install --frozen-lockfile
 
-# Copy the rest of the application
+# Copiar o restante dos arquivos da aplicação
 COPY . .
 
-# Build the app
+# Rodar o build da aplicação
 RUN pnpm run build
 
-# Expose the application port
+# Definir a porta que a aplicação vai expor
 EXPOSE 3000
 
-# Start the app
+# Definir o comando para rodar a aplicação
 CMD ["pnpm", "start"]
