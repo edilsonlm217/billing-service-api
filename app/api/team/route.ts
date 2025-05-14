@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { getTeamForUser } from '@/lib/db/queries';
 
 export async function GET() {

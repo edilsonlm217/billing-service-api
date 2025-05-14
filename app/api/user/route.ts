@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { getUser } from '@/lib/db/queries';
 
 export async function GET() {

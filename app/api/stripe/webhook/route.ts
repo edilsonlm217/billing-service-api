@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import Stripe from 'stripe';
 import { handleSubscriptionChange, stripe } from '@/lib/payments/stripe';
 import { NextRequest, NextResponse } from 'next/server';
