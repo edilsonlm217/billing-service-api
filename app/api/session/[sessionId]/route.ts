@@ -78,8 +78,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ session
         const final = processed.join('\n') + '\n\n';
 
         try {
-          await writer.write(final);
+          const encoded = new TextEncoder().encode(final);
+          await writer.write(encoded);
         } catch (err) {
+          console.log(err);
           if ((err as Error).name === 'TypeError') break; // writer já fechado
         }
       }
