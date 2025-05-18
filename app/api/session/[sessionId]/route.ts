@@ -12,15 +12,10 @@ export async function GET() {
     await writer.write(encoder.encode(payload));
   }, 2000);
 
-  // Fecha o stream ao final (teoricamente nunca, a não ser por erro)
-  const keepAlive = setInterval(() => {
-    writer.write(encoder.encode(`:\n\n`)); // ping vazio pra manter conexão viva
-  }, 15000);
 
   // Simula desconexão segura após 60s só pra não deixar preso em ambiente de dev
   setTimeout(() => {
     clearInterval(interval);
-    clearInterval(keepAlive);
     writer.close();
   }, 60000);
 
