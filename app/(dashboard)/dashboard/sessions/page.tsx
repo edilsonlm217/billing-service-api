@@ -23,6 +23,44 @@ export default function SessionPage() {
 
   useEffect(() => {
     let evtSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let isUnmounted = false;
+
+    function connectStream() {
+      evtSource = new EventSource(`/sessions/${sessionId}/stream`);
+
+      evtSource.onopen = () => {
+        if (isUnmounted) return;
+        setStreamConnected(true);
+        setLoading(false);
+        setError(null);
+      };
+
+      evtSource.onmessage = (event) => {
+        if (isUnmounted) return;
+        try {
+          const data = JSON.parse(event.data) as SessionState;
+          setSession(data);
+          setError(null);
+        } catch {
+          setError('Erro ao interpretar dados da sessão');
+        }
+      };
+
+      evtSource.onerror = () => {
+        if (isUnmounted) return;
+        setError('Conexão perdida. Tentando reconectar...');
+        setStreamConnected(false);
+        evtSource?.close();
+
+        // Reconnect após 5s
+        reconnectTimeout = setTimeout(() => {
+          if (!isUnmounted) {
+            connectStream();
+          }
+        }, 5000);
+      };
+    }
 
     async function startSession() {
       setLoading(true);
@@ -36,27 +74,7 @@ export default function SessionPage() {
           throw new Error(`Erro ao iniciar sessão: ${errorText}`);
         }
 
-        evtSource = new EventSource(`/sessions/${sessionId}/stream`);
-
-        evtSource.onopen = () => {
-          setStreamConnected(true);
-          setLoading(false);
-        };
-
-        evtSource.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data) as SessionState;
-            setSession(data);
-            setError(null);
-          } catch {
-            setError('Erro ao interpretar dados da sessão');
-          }
-        };
-
-        evtSource.onerror = () => {
-          setError('Conexão perdida. Tentando reconectar...');
-          setStreamConnected(false);
-        };
+        connectStream();
       } catch (err: any) {
         setError(err.message || 'Erro inesperado');
         setLoading(false);
@@ -66,9 +84,9 @@ export default function SessionPage() {
     startSession();
 
     return () => {
-      if (evtSource) {
-        evtSource.close();
-      }
+      isUnmounted = true;
+      if (evtSource) evtSource.close();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
   }, [sessionId]);
 
