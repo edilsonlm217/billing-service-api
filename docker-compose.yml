@@ -25,6 +25,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+      - BAILEYS_API_URL=${BAILEYS_API_URL}
     depends_on:
       - db
     networks:
