@@ -46,4 +46,4 @@ RUN pnpm run build
 EXPOSE 3000
 
 # Rodar migrations na inicialização do container
-CMD ["sh", "-c", "pnpm db:migrate && pnpm start"]
+CMD ["sh", "-c", "pnpm db:migrate && pnpm dev"]
