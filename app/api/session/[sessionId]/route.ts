@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ session
     try {
       writer.close(); // encerra a stream para o cliente
     } catch (err) {
-      // já pode ter sido fechada
+      console.log(err);
     }
   });
 

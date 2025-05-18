@@ -19,61 +19,64 @@ type SessionState = {
 };
 
 export default function SessionPage() {
-  const sessionId = 'cliente-whatsapp-01'; // ajustar conforme necessário
+  const sessionId = 'cliente-whatsapp-01';
   const [session, setSession] = useState<SessionState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [streamConnected, setStreamConnected] = useState(false);
-  const [streamStatus, setStreamStatus] = useState<string | null>(null); // Novo estado para status do stream
+  const [streamStatus, setStreamStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    let evtSource: EventSource | null = null;
+    const controller = new AbortController();
 
-    function listenToStream() {
-      console.log('[listenToStream] Tentando conectar ao SSE /api/session/' + sessionId);
+    async function listenToStream() {
+      console.log('[listenToStream] Tentando conectar via fetch/ReadableStream');
 
-      return new Promise<void>((resolve, reject) => {
-        evtSource = new EventSource(`/api/session/${sessionId}`);
+      try {
+        const res = await fetch(`/api/session/${sessionId}`, {
+          headers: { Accept: 'text/event-stream' },
+          signal: controller.signal,
+        });
 
-        evtSource.onopen = () => {
-          console.log('[EventSource] Conexão aberta');
-          setStreamConnected(true);
-          setLoading(false);
-          setError(null);
-          setStreamStatus(null); // Limpa status de erro da conexão ao abrir
-          resolve();
-        };
+        if (!res.ok || !res.body) {
+          throw new Error(`Resposta inválida do servidor: ${res.status}`);
+        }
 
-        evtSource.onmessage = (event) => {
-          console.log('[EventSource] Mensagem recebida:', event.data);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
 
-          try {
-            const data = JSON.parse(event.data);
-            console.log('[EventSource] Parsed data:', data);
-            setSession(data.state);
-            setError(null);
-          } catch (err) {
-            console.error('[EventSource] Erro ao interpretar dados da sessão:', err);
-            setError('Erro ao interpretar dados da sessão');
+        setLoading(false);
+        setStreamStatus(null);
+        setError(null);
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // mantém o que sobrou incompleto
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                console.log('[Stream] Dados recebidos:', data);
+                setSession(data.state);
+              } catch (e) {
+                console.warn('[Stream] Erro ao parsear linha:', e);
+                setError('Erro ao interpretar dados da sessão.');
+              }
+            }
           }
-        };
-
-        evtSource.onerror = (err) => {
-          console.error('[EventSource] Erro ou desconexão:', err);
-
-          if (evtSource?.readyState === EventSource.CLOSED) {
-            setError('Conexão fechada pelo servidor.');
-            setStreamConnected(false);
-            setStreamStatus('Conexão fechada pelo servidor.');
-            reject(new Error('Conexão fechada pelo servidor.'));
-          } else {
-            setError('Conexão perdida. Tentando reconectar...');
-            setStreamConnected(false);
-            setStreamStatus('Conexão perdida. Tentando reconectar...');
-            // Não rejeita para permitir retry automático do EventSource
-          }
-        };
-      });
+        }
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') return;
+        console.error('[Stream] Erro geral:', e);
+        setError('Conexão perdida com o servidor.');
+        setStreamStatus('Conexão perdida. Tente recarregar.');
+      }
     }
 
     async function startOrListenSession() {
@@ -84,8 +87,8 @@ export default function SessionPage() {
 
       try {
         await listenToStream();
-      } catch (e) {
-        console.log('[startOrListenSession] Não conseguiu escutar stream, vai criar a sessão', e);
+      } catch {
+        console.log('[startOrListenSession] Stream falhou, tentando iniciar a sessão');
 
         try {
           const resp = await fetch('/api/session', {
@@ -96,17 +99,13 @@ export default function SessionPage() {
 
           if (!resp.ok) {
             const text = await resp.text();
-            throw new Error(`Erro ao iniciar sessão: ${text}`);
+            throw new Error(text);
           }
 
-          console.log('[startOrListenSession] Sessão criada com sucesso, tentando ouvir o stream novamente');
-
-          if (evtSource) {
-            evtSource.close();
-          }
+          console.log('[startOrListenSession] Sessão criada. Conectando stream...');
           await listenToStream();
         } catch (error: any) {
-          console.error('[startOrListenSession] Erro ao criar sessão:', error);
+          console.error('[startOrListenSession] Falha ao criar sessão:', error);
           setError(error.message || 'Erro inesperado ao criar sessão');
           setLoading(false);
         }
@@ -116,26 +115,15 @@ export default function SessionPage() {
     startOrListenSession();
 
     return () => {
-      console.log('[useEffect] Cleanup: fechando EventSource');
-      if (evtSource) {
-        evtSource.close();
-      }
+      console.log('[Cleanup] Abortando stream');
+      controller.abort();
     };
   }, [sessionId]);
 
   function renderContent() {
-    if (loading) {
-      return <p>Iniciando sessão...</p>;
-    }
-
-    if (error && !session) {
-      // Mostra erro só se não houver sessão carregada, para não sobrepor mensagens do stream
-      return <p className="text-red-600">{error}</p>;
-    }
-
-    if (!session) {
-      return <p>Aguardando dados da sessão...</p>;
-    }
+    if (loading) return <p>Iniciando sessão...</p>;
+    if (error && !session) return <p className="text-red-600">{error}</p>;
+    if (!session) return <p>Aguardando dados da sessão...</p>;
 
     const { status, qrCode, creds, sessionId, lastUpdated } = session;
     const contact = creds?.contact;
@@ -161,7 +149,6 @@ export default function SessionPage() {
         ) : (
           <p>Conectando, aguardando QR Code...</p>
         );
-
       case 'qr-timeout':
         return (
           <div className="text-center text-orange-600">
@@ -169,7 +156,6 @@ export default function SessionPage() {
             <p>Tente recarregar a página para gerar um novo código.</p>
           </div>
         );
-
       case 'open':
         return (
           <>
@@ -179,7 +165,6 @@ export default function SessionPage() {
             <p><strong>Atualizado em:</strong> {lastUpdated}</p>
           </>
         );
-
       case 'close':
         return (
           <>
@@ -188,7 +173,6 @@ export default function SessionPage() {
             <p><strong>Plataforma:</strong> {creds?.phonePlatform ?? 'Desconhecida'}</p>
           </>
         );
-
       case 'logged-out':
         return (
           <>
@@ -197,7 +181,6 @@ export default function SessionPage() {
             <p><strong>Plataforma:</strong> {creds?.phonePlatform ?? 'Desconhecida'}</p>
           </>
         );
-
       default:
         return (
           <div className="text-gray-600">
@@ -216,13 +199,11 @@ export default function SessionPage() {
           <CardTitle>Status da Sessão</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Exibe status do stream, se existir */}
           {streamStatus && (
             <div className="mb-4 p-2 text-center text-orange-600 border border-orange-300 rounded">
               {streamStatus}
             </div>
           )}
-
           {renderContent()}
         </CardContent>
       </Card>
