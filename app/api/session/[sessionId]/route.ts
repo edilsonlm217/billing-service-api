@@ -1,64 +1,51 @@
+import { NextRequest } from 'next/server';
+import { createSseStream } from '@/lib/sse';
+import { connectWithRetry } from '@/lib/sse-client';
+
 export const runtime = 'nodejs';
 
-import { NextApiRequest, NextApiResponse } from 'next';
-import { NextRequest } from 'next/server';
-import QRCode from 'qrcode';
+export async function GET(req: NextRequest, { params }: { params: { sessionId: string } }) {
+  const { sessionId } = params;
 
-type SessionState = {
-  sessionId: string;
-  status: 'connecting' | 'open' | 'close' | 'logged-out' | 'qr-timeout';
-  qrCode: string | null;
-  creds: {
-    contact?: {
-      id: string;
-      lid?: string;
-      name?: string;
-    };
-    phonePlatform?: string;
-  } | null;
-  lastUpdated: string;
-};
+  let externalSseClose: (() => void) | undefined;
 
-export async function GET(req: NextApiRequest, res: NextApiResponse, context: { params: Promise<{ sessionId: string }> }) {
-  const encoder = new TextEncoder();
+  const stream = createSseStream(req, (send) => {
+    let closed = false;
 
-  const stream = new ReadableStream({
-    start(controller) {
-      let count = 0;
-
-      function push() {
-        if (count >= 10) {
-          controller.close();
-          return;
+    // Abre conexão SSE externa com reconexão automática
+    connectWithRetry({
+      url: `${process.env.BAILEYS_API_URL}/sessions/${sessionId}/stream`,
+      onMessage: (data) => {
+        if (closed) return;
+        // Envia os dados recebidos do SSE externo para o cliente via SSE
+        send(data);
+      },
+      onClose: () => {
+        if (!closed) {
+          // opcional: envia mensagem ao cliente que a conexão externa caiu
+          send({ info: 'Conexão externa fechada, tentando reconectar...' });
         }
-
-        // Monta o payload conforme seu tipo SessionState
-        const sessionState = {
-          sessionId: 'session-123',
-          status: 'connecting',
-          qrCode: null,
-          creds: null,
-          lastUpdated: new Date().toISOString(),
-        } as SessionState;
-
-        const payload = `data: ${JSON.stringify(sessionState)}\n\n`;
-        controller.enqueue(encoder.encode(payload));
-
-        count++;
-        setTimeout(push, 3000);
+      },
+    }).then((closeFn) => {
+      externalSseClose = closeFn;
+    }).catch((err) => {
+      if (!closed) {
+        send({ error: 'Erro ao conectar SSE externo: ' + err.message });
       }
+    });
 
-      push();
-    },
+    // Função de cleanup chamada quando o cliente desconecta
+    return () => {
+      closed = true;
+      if (externalSseClose) externalSseClose();
+    };
   });
 
   return new Response(stream, {
     headers: {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
-      // CORS se necessário:
-      // 'Access-Control-Allow-Origin': '*',
     },
   });
 }
