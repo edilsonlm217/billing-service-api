@@ -2,12 +2,13 @@
 
 import React from 'react'
 import { useSse } from './useSse'
+import { useFetch } from './useFetch'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Copy, User, Key, Smartphone } from 'lucide-react'
+import { Copy, User, Key, Smartphone, LogOut } from 'lucide-react'
 import { SessionConnectionStatus, SessionSsePayload } from '@/types/session'
 
 const statusColors: Record<SessionConnectionStatus, string> = {
@@ -23,8 +24,20 @@ export default function SimpleSessionStream() {
   const { data, error } = useSse<SessionSsePayload>(`/api/session/${sessionId}`)
   const state = data?.state
 
+  const { data: logoutData, error: logoutError, loading: logoutLoading, execute: executeFetch } = useFetch()
+
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
+  }
+
+  async function handleLogout() {
+    const res = await executeFetch(`/api/session/${sessionId}/logout`, {
+      method: 'POST',
+    })
+
+    if (res) {
+      alert('Logout iniciado com sucesso')
+    }
   }
 
   return (
@@ -34,11 +47,31 @@ export default function SimpleSessionStream() {
       </h1>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex justify-between items-center">
           <CardTitle>Status da Conexão</CardTitle>
+
+          {state?.status === 'open' && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleLogout}
+              disabled={logoutLoading}
+              aria-label="Logout"
+              className="flex items-center gap-1"
+            >
+              {logoutLoading ? 'Deslogando...' : (
+                <>
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </>
+              )}
+            </Button>
+          )}
         </CardHeader>
+
         <CardContent className="space-y-4">
           {error && <p className="text-red-600">{error}</p>}
+          {logoutError && <p className="text-red-600">{logoutError}</p>}
 
           {!state ? (
             <div className="h-24 w-full bg-gray-100 animate-pulse rounded" />
