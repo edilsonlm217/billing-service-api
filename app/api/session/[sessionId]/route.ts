@@ -4,7 +4,11 @@ import { connectWithRetry } from '@/lib/sse-client';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest, { params }: { params: { sessionId: string } }) {
+export async function GET(
+  req: NextRequest,
+  context: { params: { sessionId: string } }
+) {
+  const params = await context.params;
   const { sessionId } = params;
 
   let externalSseClose: (() => void) | undefined;
