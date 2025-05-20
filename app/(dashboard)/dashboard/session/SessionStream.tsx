@@ -19,7 +19,6 @@ interface SimpleSessionStreamProps {
 }
 
 export default function SimpleSessionStream({ mode }: SimpleSessionStreamProps) {
-  console.log(mode);
   if (mode.type === 'unauthorized') {
     return (
       <section className="flex-1 p-4 lg:p-8">
@@ -56,8 +55,6 @@ export default function SimpleSessionStream({ mode }: SimpleSessionStreamProps) 
   const { data, error } = useSse<SessionSsePayload>(`/api/session/${sessionId}`)
   const state = data?.state
 
-  console.log(error);
-
   return (
     <section className="flex-1 p-4 lg:p-8">
       <h1 className="text-lg lg:text-2xl font-medium bold text-gray-900 mb-6">Gerenciar Sessão</h1>
@@ -68,7 +65,7 @@ export default function SimpleSessionStream({ mode }: SimpleSessionStreamProps) 
           <>
             {state.status === 'open' && (<SessionOpenSection state={state} />)}
             {state.status === 'close' && state.qrCode && (<SessionCloseSection state={state} />)}
-            {state.status === 'logged-out' && (<LoggedOutSection state={state} />)}
+            {state.status === 'logged-out' && state.creds && (<LoggedOutSection state={state} />)}
             {state.status === 'connecting' && !state.qrCode && (<SectionConnectingSection state={state} />)}
             {state.status === 'connecting' && state.qrCode && (<ReadQrCodeSection state={state} />)}
             {state.status === 'qr-timeout' && (<QrCodeTimeOutSection />)}
