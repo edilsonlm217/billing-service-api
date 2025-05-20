@@ -3,10 +3,16 @@ import { motion } from 'framer-motion'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { SessionState } from '@/types/session'
+import { SessionConnectionStatus, SessionState } from '@/types/session'
 
-const statusColors = {
-  'logged-out': 'text-red-900 bg-red-100 border-red-300',
+const statusColors: Record<SessionConnectionStatus, string> = {
+  starting: 'text-yellow-800 bg-yellow-100 border-yellow-300',
+  open: 'text-green-800 bg-green-100 border-green-300',
+  close: 'text-red-800 bg-red-100 border-red-300',
+  'logged-out': 'text-red-900 bg-red-200 border-red-400',
+  'qr-timeout': 'text-gray-700 bg-gray-200 border-gray-400',
+  'awaiting-qr-code-reading': 'text-blue-800 bg-blue-100 border-blue-300',
+  restarting: 'text-purple-800 bg-purple-100 border-purple-300',
 }
 
 function formatPhoneNumber(phoneId: string): string {

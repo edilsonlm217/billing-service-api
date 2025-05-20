@@ -63,11 +63,13 @@ export default function SimpleSessionStream({ mode }: SimpleSessionStreamProps) 
         ? (<SkeletonSection />)
         : (
           <>
+            {state.status === 'starting' && !(state.creds?.contact?.id) && (<SkeletonSection />)}
+            {state.status === 'starting' && state.creds?.contact?.id && (<SectionConnectingSection state={state} />)}
             {state.status === 'open' && (<SessionOpenSection state={state} />)}
-            {state.status === 'close' && state.qrCode && (<SessionCloseSection state={state} />)}
+            {state.status === 'close' && (<SessionCloseSection state={state} />)}
             {state.status === 'logged-out' && (<LoggedOutSection state={state} />)}
-            {state.status === 'connecting' && !state.qrCode && state.creds?.contact?.id && (<SectionConnectingSection state={state} />)}
-            {state.status === 'connecting' && state.qrCode && (<ReadQrCodeSection state={state} />)}
+            {state.status === 'restarting' && (<SectionConnectingSection state={state} />)}
+            {state.status === 'awaiting-qr-code-reading' && state.qrCode && (<ReadQrCodeSection state={state} />)}
             {state.status === 'qr-timeout' && (<QrCodeTimeOutSection />)}
           </>
         )

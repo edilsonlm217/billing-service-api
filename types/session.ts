@@ -1,9 +1,11 @@
 export type SessionConnectionStatus =
-  | 'connecting'
-  | 'open'
+  | 'starting'
+  | 'awaiting-qr-code-reading'
+  | 'qr-timeout'
   | 'close'
-  | 'logged-out'
-  | 'qr-timeout';
+  | 'restarting'
+  | 'open'
+  | 'logged-out';
 
 export interface SessionCreds {
   contact?: {
