@@ -2,7 +2,6 @@ import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { motion } from 'framer-motion'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { SessionState } from '@/types/session'
 
 interface Props {
@@ -10,24 +9,14 @@ interface Props {
 }
 
 export default function ReadQrCodeSection({ state }: Props) {
-  const handleRetry = () => {
-    location.reload()
-  }
-
-  const isTimeout = state.status === 'qr-timeout'
-
   return (
     <Card>
       <CardHeader className="flex flex-col items-start gap-1 pb-2">
         <p className="text-sm text-muted-foreground">
-          {isTimeout
-            ? 'Tempo de leitura expirado'
-            : 'Nenhuma sessão ativa no momento'}
+          Nenhuma sessão ativa no momento
         </p>
         <CardTitle className="text-xl font-semibold text-foreground mt-1">
-          {isTimeout
-            ? 'O QR Code expirou'
-            : 'Inicie sua conexão com o WhatsApp'}
+          Inicie sua conexão com o WhatsApp
         </CardTitle>
       </CardHeader>
 
@@ -38,33 +27,22 @@ export default function ReadQrCodeSection({ state }: Props) {
           transition={{ duration: 0.4 }}
           className="bg-muted rounded-xl p-6 border flex flex-col items-center justify-center text-center shadow-inner"
         >
-          {isTimeout ? (
-            <>
-              <p className="text-base font-medium text-muted-foreground mb-4">
-                O tempo para escanear o QR Code expirou. Isso pode acontecer se você demorar muito para escanear.
-              </p>
-              <Button onClick={handleRetry} variant="default">
-                Tentar novamente
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-base font-medium text-muted-foreground mb-2">Pronto para conectar</p>
+          <>
+            <p className="text-base font-medium text-muted-foreground mb-2">Pronto para conectar</p>
 
-              {!state.qrCode ? (
-                <div className="w-56 h-56 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
-                  <span className="text-sm text-gray-400">Gerando QR Code...</span>
-                </div>
-              ) : (
-                <>
-                  <QRCodeSVG value={state.qrCode} size={224} className="rounded-md shadow-md" />
-                  <p className="text-sm text-muted-foreground mt-4 max-w-xs">
-                    Escaneie com seu WhatsApp para iniciar a sessão automaticamente.
-                  </p>
-                </>
-              )}
-            </>
-          )}
+            {!state.qrCode ? (
+              <div className="w-56 h-56 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+                <span className="text-sm text-gray-400">Gerando QR Code...</span>
+              </div>
+            ) : (
+              <>
+                <QRCodeSVG value={state.qrCode} size={224} className="rounded-md shadow-md" />
+                <p className="text-sm text-muted-foreground mt-4 max-w-xs">
+                  Escaneie com seu WhatsApp para iniciar a sessão automaticamente.
+                </p>
+              </>
+            )}
+          </>
         </motion.div>
       </CardContent>
     </Card>
