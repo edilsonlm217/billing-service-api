@@ -1,7 +1,7 @@
 import SimpleSessionStream from "./SessionStream"
 import { SessionMode } from "@/types/session-mode"
 
-export async function parseSessionResponse(
+async function parseSessionResponse(
   response: Response,
   sessionId: string
 ): Promise<SessionMode> {
