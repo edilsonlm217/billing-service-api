@@ -63,6 +63,7 @@ export default async function SessionPage() {
 
     mode = await parseSessionResponse(response, sessionId)
   } catch (err) {
+    console.log('catch block: ', err);
     if (err) {
       mode = {
         type: 'unavailable',
