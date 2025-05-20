@@ -12,6 +12,7 @@ import { Copy, User, Key, Smartphone, LogOut } from 'lucide-react'
 import { SessionConnectionStatus, SessionSsePayload } from '@/types/session'
 import { SessionMode } from '@/types/session-mode'
 import { QRCodeSVG } from 'qrcode.react'
+import { motion } from 'framer-motion'
 
 const statusColors: Record<SessionConnectionStatus, string> = {
   connecting: 'text-yellow-800 bg-yellow-100 border-yellow-300',
@@ -130,12 +131,30 @@ export default function SimpleSessionStream({ mode }: SimpleSessionStreamProps) 
                   {new Date(state.lastUpdated).toLocaleString()}
                 </p>
 
-                {state.qrCode && (
-                  <div>
-                    <p className="font-medium mb-1">QR Code</p>
-                    <QRCodeSVG value={state.qrCode} size={256} />
-                  </div>
+                {state.status !== 'open' && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="bg-muted rounded-xl p-6 border flex flex-col items-center justify-center text-center shadow-inner"
+                  >
+                    <p className="text-base font-medium text-muted-foreground mb-2">Pronto para conectar</p>
+
+                    {!state.qrCode ? (
+                      <div className="w-56 h-56 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+                        <span className="text-sm text-gray-400">Gerando QR Code...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <QRCodeSVG value={state.qrCode} size={224} className="rounded-md shadow-md" />
+                        <p className="text-sm text-muted-foreground mt-4 max-w-xs">
+                          Escaneie com seu WhatsApp para iniciar a sessão automaticamente.
+                        </p>
+                      </>
+                    )}
+                  </motion.div>
                 )}
+
               </div>
 
               {state.creds && (
