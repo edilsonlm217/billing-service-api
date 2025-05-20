@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, context: any) {
       onClose: () => {
         if (!closed) {
           // opcional: envia mensagem ao cliente que a conexão externa caiu
-          send({ info: 'Conexão externa fechada, tentando reconectar...' });
+          // send({ info: 'Conexão externa fechada, tentando reconectar...' });
         }
       },
     }).then((closeFn) => {
