@@ -63,10 +63,17 @@ export default async function SessionPage() {
 
     mode = await parseSessionResponse(response, sessionId)
   } catch (err) {
-    mode = {
-      type: 'unavailable',
-      reason: 'Não foi possível se conectar com o servidor',
-      sessionId,
+    if (err) {
+      mode = {
+        type: 'unavailable',
+        reason: 'Não foi possível se conectar com o servidor',
+        sessionId,
+      }
+    } else {
+      mode = {
+        type: 'listen',
+        sessionId,
+      }
     }
   }
 

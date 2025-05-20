@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, context: any) {
       externalSseClose = closeFn;
     }).catch((err) => {
       if (!closed) {
-        send({ error: 'Erro ao conectar SSE externo: ' + err.message });
+        // send({ error: 'Erro ao conectar SSE externo: ' + err.message });
       }
     });
 

@@ -19,6 +19,7 @@ interface SimpleSessionStreamProps {
 }
 
 export default function SimpleSessionStream({ mode }: SimpleSessionStreamProps) {
+  console.log(mode);
   if (mode.type === 'unauthorized') {
     return (
       <section className="flex-1 p-4 lg:p-8">
