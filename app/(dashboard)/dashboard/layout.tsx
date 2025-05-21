@@ -21,6 +21,7 @@ export default function DashboardLayout({
     { href: '/dashboard/security', icon: Shield, label: 'Security' },
     { href: '/dashboard/session', icon: Send, label: 'Gerenciar Sessão' },
     { href: '/dashboard/messages', icon: MessageCircle, label: 'Messages' },
+    { href: '/dashboard/api-keys', icon: MessageCircle, label: 'Chaves de API' },
   ];
 
   return (

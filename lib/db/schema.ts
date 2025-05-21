@@ -72,9 +72,6 @@ export const invitations = pgTable('invitations', {
 export const apiKeys = pgTable('api_keys', {
   id: serial('id').primaryKey(),
   key: varchar('key', { length: 255 }).notNull().unique(),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.id),
   teamId: integer('team_id')
     .notNull()
     .references(() => teams.id),
@@ -127,10 +124,6 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
 }));
 
 export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
-  user: one(users, {
-    fields: [apiKeys.userId],
-    references: [users.id],
-  }),
   team: one(teams, {
     fields: [apiKeys.teamId],
     references: [teams.id],

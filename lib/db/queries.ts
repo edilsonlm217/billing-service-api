@@ -1,6 +1,6 @@
 import { desc, and, eq, isNull } from 'drizzle-orm';
 import { db } from './drizzle';
-import { activityLogs, teamMembers, teams, users } from './schema';
+import { activityLogs, teamMembers, teams, users, apiKeys } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
 
@@ -127,4 +127,32 @@ export async function getTeamForUser() {
   });
 
   return result?.team || null;
+}
+
+export async function createApiKey(teamId: number) {
+  // Inativa todas as chaves anteriores do time
+  await db
+    .update(apiKeys)
+    .set({ active: false })
+    .where(eq(apiKeys.teamId, teamId));
+
+  const newKey = crypto.randomUUID(); // ou gere uma chave mais segura se quiser
+
+  const [created] = await db
+    .insert(apiKeys)
+    .values({
+      key: newKey,
+      teamId,
+      active: true,
+    })
+    .returning();
+
+  return created;
+}
+
+export async function getApiKeys(teamId: number) {
+  return db
+    .select()
+    .from(apiKeys)
+    .where(eq(apiKeys.teamId, teamId));
 }
