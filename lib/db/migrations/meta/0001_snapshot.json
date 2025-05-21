@@ -1,5 +1,5 @@
 {
-  "id": "2851949b-c725-4ceb-83ee-fae14c13beb7",
+  "id": "c49f6295-c086-4525-9d08-92a833a9b4f0",
   "prevId": "261fd993-fb2c-43e7-89d6-cd58786c5f58",
   "version": "7",
   "dialect": "postgresql",
@@ -97,12 +97,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
         "team_id": {
           "name": "team_id",
           "type": "integer",
@@ -126,19 +120,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "api_keys_user_id_users_id_fk": {
-          "name": "api_keys_user_id_users_id_fk",
-          "tableFrom": "api_keys",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "api_keys_team_id_teams_id_fk": {
           "name": "api_keys_team_id_teams_id_fk",
           "tableFrom": "api_keys",
