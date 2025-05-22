@@ -9,7 +9,6 @@ export async function POST(req: NextRequest) {
   }
 
   const apiKey = authHeader.split(' ')[1];
-
   const result = await getApiKeyWithTeam(apiKey);
 
   if (!result || !result.apiKey.active) {
@@ -18,18 +17,19 @@ export async function POST(req: NextRequest) {
 
   const { team } = result;
 
-  const status = team.subscriptionStatus;
-  if (status !== 'active' && status !== 'trialing') {
-    return NextResponse.json(
-      { error: 'Subscription inactive or expired' },
-      { status: 402 }
-    );
-  }
+  // const status = team.subscriptionStatus;
+  // if (status !== 'active' && status !== 'trialing') {
+  //   return NextResponse.json(
+  //     { error: 'Subscription inactive or expired' },
+  //     { status: 402 }
+  //   );
+  // }
 
   const body = await req.json();
   const { to, text } = body;
-  const sessionId = 'cliente-whatsapp-01'
-  await fetch(`${process.env.NEST_API_URL}/sessions/${sessionId}/send-message`, {
+  const sessionId = 'cliente-whatsapp-01';
+
+  const baileysRes = await fetch(`${process.env.BAILEYS_API_URL}/sessions/${sessionId}/send-message`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({ to, message: text }),
   });
 
+  const baileysJson = await baileysRes.json();
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json(baileysJson, { status: baileysRes.status });
 }
