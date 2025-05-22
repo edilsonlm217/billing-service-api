@@ -156,3 +156,16 @@ export async function getApiKeys(teamId: number) {
     .from(apiKeys)
     .where(eq(apiKeys.teamId, teamId));
 }
+
+export async function getApiKeyWithTeam(key: string) {
+  const [result] = await db
+    .select({
+      apiKey: apiKeys,
+      team: teams,
+    })
+    .from(apiKeys)
+    .innerJoin(teams, eq(apiKeys.teamId, teams.id))
+    .where(eq(apiKeys.key, key));
+
+  return result;
+}
