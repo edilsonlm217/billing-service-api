@@ -2,8 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getApiKeyWithTeam } from '@/lib/db/queries';
 
 export async function POST(req: NextRequest) {
-  console.log(req);
-  return NextResponse.json({ ok: true }, { status: 200 });
+  const text = await req.text(); // Lê como texto bruto
+  const params = new URLSearchParams(text); // Converte para objeto tipo formulário
+
+  const u = params.get('u');
+  const p = params.get('p');
+  const to = params.get('to');
+  const msg = params.get('msg');
+  const token = params.get('token');
+  const celular = params.get('celular');
+  const mensagem = params.get('mensagem');
+
+  console.log({ u, p, to, msg, token, celular, mensagem });
+
+  return NextResponse.json({ ok: true });
   // const authHeader = req.headers.get('authorization');
 
   // if (!authHeader || !authHeader.startsWith('Bearer ')) {
