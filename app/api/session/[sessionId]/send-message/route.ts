@@ -3,6 +3,7 @@ import { getApiKeyWithTeam } from '@/lib/db/queries';
 
 export async function POST(req: NextRequest) {
   console.log(req);
+  return NextResponse.json({ ok: true }, { status: 200 });
   // const authHeader = req.headers.get('authorization');
 
   // if (!authHeader || !authHeader.startsWith('Bearer ')) {
