@@ -2,15 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getApiKeyWithTeam } from '@/lib/db/queries';
 
 export async function POST(req: NextRequest) {
-  const text = await req.text();
-  const params = new URLSearchParams(text);
+  // Lê o body como ArrayBuffer
+  const buf = await req.arrayBuffer();
+
+  // Cria um decoder Latin1 para interpretar o buffer
+  const decoder = new TextDecoder('iso-8859-1');
+
+  // Decodifica o buffer como Latin1
+  const textLatin1 = decoder.decode(buf);
+
+  // Agora cria URLSearchParams normalmente
+  const params = new URLSearchParams(textLatin1);
 
   const u = params.get('u');
   const p = params.get('p');
   const to = params.get('to');
   let msg = params.get('msg') || params.get('mensagem');
 
-  // Limpa a mensagem: substitui \r\n (quebra Windows) por \n (quebra Unix padrão)
+  // Substitui \r\n por \n
   if (msg) {
     msg = msg.replace(/\r\n/g, '\n');
   }
