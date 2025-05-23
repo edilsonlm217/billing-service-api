@@ -43,8 +43,8 @@ export function fixAccents(message: string): string {
 
 export function normalizeLineBreaks(message: string): string {
   return message
-    .replace(/\r\n/g, "\\n")
-    .replace(/ {5}/g, "\\n\\n")
-    .replace(/ {4}/g, "\\n\\n")
-    .replace(/ {2}/g, "\\n");
+    .replace(/\r\n/g, "\n")
+    .replace(/ {5}/g, "\n\n")
+    .replace(/ {4}/g, "\n\n")
+    .replace(/ {2}/g, "\n");
 }
