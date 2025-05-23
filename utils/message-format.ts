@@ -1,0 +1,50 @@
+export function fixAccents(message: string): string {
+  return message
+    .replace(/&copy;/g, "é")
+    .replace(/&sup3;/g, "á")
+    .replace(/&shy;/g, "í")
+    .replace(/&ordm;/g, "ú")
+    .replace(/&pound;/g, "ã")
+    .replace(/&sect;/g, "ç")
+    .replace(/&micro;/g, "õ")
+    .replace(/&acute;/g, "ô")
+    .replace(/&ordf;/g, "ê")
+    .replace(/&iexcl;/g, "á")
+    .replace(/Aeaacute/g, "á")
+    .replace(/Aeatilde/g, "ã")
+    .replace(/Aeeacute/g, "é")
+    .replace(/Aeecirc/g, "ê")
+    .replace(/Aeiacute/g, "í")
+    .replace(/Aeoacute/g, "ó")
+    .replace(/Aeocirc/g, "ô")
+    .replace(/AeOacute/g, "ú")
+    .replace(/Aeuacute/g, "ç")
+    .replace(/Aeccedil/g, "Ç")
+    .replace(/AeCcedil/g, "Ç")
+    .replace(/Ã¡/g, "á")
+    .replace(/Ã§/g, "ç")
+    .replace(/Ã©/g, "é")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã­/g, "í")
+    .replace(/Ã³/g, "ó")
+    .replace(/Ãµ/g, "õ")
+    .replace(/Ãº/g, "ú")
+    .replace(/Ã/g, "A")
+    .replace(/Ã£/g, "ã")
+    .replace(/A£/g, "ã")
+    .replace(/Ã“/g, "Ó")
+    .replace(/Ã”/g, "Ô")
+    .replace(/Ã„/g, "Ä")
+    .replace(/Ã•/g, "Õ")
+    .replace(/Ã‡/g, "Ç")
+    .replace(/Ã±/g, "ñ")
+    .replace(/Ã€/g, "À");
+}
+
+export function normalizeLineBreaks(message: string): string {
+  return message
+    .replace(/\r\n/g, "\\n")
+    .replace(/ {5}/g, "\\n\\n")
+    .replace(/ {4}/g, "\\n\\n")
+    .replace(/ {2}/g, "\\n");
+}
