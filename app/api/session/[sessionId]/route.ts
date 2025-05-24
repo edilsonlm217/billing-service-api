@@ -5,6 +5,7 @@ import { connectWithRetry } from '@/lib/sse-client';
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest, context: any) {
+  console.log('request chegou');
   const { sessionId } = await context.params
 
   let externalSseClose: (() => void) | undefined;
