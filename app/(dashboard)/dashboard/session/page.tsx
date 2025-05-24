@@ -1,3 +1,4 @@
+import { getUser, getUserWithTeam } from "@/lib/db/queries"
 import SimpleSessionStream from "./SessionStream"
 import { SessionMode } from "@/types/session-mode"
 
@@ -27,23 +28,25 @@ async function parseSessionResponse(
   }
 }
 
-// Função mockada — você pode substituir pela real
-async function checkUserSubscription(sessionId: string): Promise<boolean> {
-  // Aqui você pode consultar seu banco ou serviço de billing
-  return true // ou false dependendo da situação
-}
-
 export default async function SessionPage() {
-  const sessionId = 'cliente-whatsapp-01'
+  const user = await getUser();
+  if (!user) return null;
+
+  const userWithTeam = await getUserWithTeam(user.id);
+  const { team } = userWithTeam;
+
+  if (!team || !team.id) return null;
+
+  const sessionId = user.email;
   let mode: SessionMode
 
-  // Verificação de assinatura primeiro
-  const isAuthorized = await checkUserSubscription(sessionId)
+  const subscriptionStatus = team.subscriptionStatus;
+  const isAuthorized = subscriptionStatus === 'active' || subscriptionStatus === 'trialing';
 
   if (!isAuthorized) {
     mode = {
       type: 'unauthorized',
-      reason: 'Sua assinatura está inativa. Ative para usar o WhatsApp.',
+      reason: 'Sua assinatura não está ativa. Ative para usar o WhatsApp.',
       sessionId,
     }
 
@@ -59,7 +62,9 @@ export default async function SessionPage() {
       },
       body: JSON.stringify({ sessionId }),
       cache: 'no-store',
-    })
+    });
+    console.log(sessionId);
+    console.log(response);
 
     mode = await parseSessionResponse(response, sessionId)
   } catch (err) {

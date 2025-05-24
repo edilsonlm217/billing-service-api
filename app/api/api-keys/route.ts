@@ -11,12 +11,12 @@ export async function POST() {
     }
     const userId = session.user.id;
     const userWithTeam = await getUserWithTeam(userId);
-    console.log(userWithTeam);
-    if (!userWithTeam.teamId) {
+
+    if (!userWithTeam.team || !userWithTeam.team.id) {
       return new NextResponse('Team not found', { status: 404 });
     }
 
-    const createdKey = await createApiKey(userWithTeam.teamId);
+    const createdKey = await createApiKey(userWithTeam.team.id);
 
     return NextResponse.json(createdKey);
   } catch (error) {
