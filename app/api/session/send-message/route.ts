@@ -49,6 +49,6 @@ export async function POST(req: NextRequest) {
   });
 
   const baileysJson = await baileysRes.json();
-
+  console.log(baileysJson);
   return NextResponse.json(baileysJson, { status: baileysRes.status });
 }
