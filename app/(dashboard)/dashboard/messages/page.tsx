@@ -1,15 +1,52 @@
 'use client';
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'; // Importado useEffect
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { AlertCircle, CheckCircle, XCircle, Eye } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useFetch } from '../session/useFetch'; // Verifique o caminho correto para o seu useFetch
+
+// --- Interfaces (Copie estas interfaces para um arquivo compartilhado como src/interfaces/dashboard.interface.ts) ---
+// Enum (ou tipo union de string) para os status de mensagem
+// Use os nomes em PT-BR que você mapeou na API
+export type MessageStatusString = 'Erro' | 'Pendente' | 'Enviado' | 'Entregue' | 'Lido' | 'Reproduzido' | 'Desconhecido';
+
+// Interface para um item de mensagem recente
+export interface RecentMessage {
+  sessionId: string;
+  messageId: string;
+  to: string;
+  content: string;
+  sentAt: number; // Timestamp em milissegundos
+  status: number; // O número do status (0, 1, 2, etc.)
+  // Adicione 'read?: boolean' aqui se a API já informar
+  // Ou se você precisar inferir isso de 'status' para os badges
+}
+
+// Interface para um item de dados do histograma
+export interface HistogramBarGrouped {
+  x: number;   // timestamp em ms para eixo X
+  g: MessageStatusString; // Status como string (Ex: 'Enviado', 'Desconhecido')
+  y: number;   // contagem de mensagens
+}
+
+// Interface principal para a resposta completa do dashboard
+export interface DashboardApiResponse {
+  totalMessages: number;
+  totalSent: number;
+  totalDelivered: number;
+  totalRead: number;
+  recentMessages: RecentMessage[];
+  histogramData: HistogramBarGrouped[];
+}
+
+// --- Fim das Interfaces ---
 
 // Opções de período
 const TIME_WINDOWS = [
@@ -17,32 +54,47 @@ const TIME_WINDOWS = [
   { label: 'Últimas 24 horas', value: '24h' },
   { label: 'Últimos 7 dias', value: '7d' },
   { label: 'Últimos 30 dias', value: '30d' },
-]
+];
 
 // Função para formatar data no padrão local
 function formatDate(date: Date) {
-  return date.toLocaleString()
+  return date.toLocaleString();
 }
 
-// Gráfico de barras para múltiplas séries
+// Mapeamento de status numéricos para string e para o status de badge
+// Ajuste este mapeamento conforme os números de status que sua API retorna
+const mapStatusNumberToDisplay: Record<number, { text: string, type: 'success' | 'error' | 'pending', showReadBadge?: boolean }> = {
+  // 0: Mensagem enviada para o servidor da UPdata/fila de envio
+  0: { text: 'Pendente', type: 'pending' },
+  // 1: Falha no envio para o provedor (WhatsApp, etc.)
+  1: { text: 'Erro', type: 'error' },
+  // 2: Enviada para o provedor E entregue no aparelho (um check)
+  2: { text: 'Entregue', type: 'success' },
+  // 3: Entregue no aparelho E lida pelo destinatário (dois checks + olho)
+  3: { text: 'Entregue', type: 'success', showReadBadge: true }, // Mudei aqui: texto principal continua "Entregue", mas indica que é lida
+};
+
+
+// Gráfico de barras para múltiplas séries (Não renderizado por enquanto, mas mantido para referência futura)
+/*
 function MultiBarChart({ data }: { data: Record<string, number[]> }) {
-  const keys = Object.keys(data)
-  const max = Math.max(...Object.values(data).flat())
-  const barWidth = 20
-  const barSpacing = 8
-  const groupSpacing = 12
+  const keys = Object.keys(data);
+  const max = Math.max(...Object.values(data).flat(), 1); // Garante min 1 para evitar divisão por zero
+  const barWidth = 20;
+  const barSpacing = 8;
+  const groupSpacing = 12;
+
+  const width = data[keys[0]]
+    ? data[keys[0]].length * (keys.length * (barWidth + barSpacing) + groupSpacing)
+    : 0;
 
   return (
-    <svg
-      width={
-        data[keys[0]].length * (keys.length * (barWidth + barSpacing) + groupSpacing)
-      }
-      height={100}
-    >
-      {data[keys[0]].map((_, i) => {
+    <svg width={width} height={100}>
+      <rect x="0" y="0" width={width} height="100" fill="#f0f0f0" rx="5" ry="5" />
+      {data[keys[0]]?.map((_, i) => {
         return keys.map((key, idx) => {
-          const value = data[key][i]
-          const barHeight = (value / max) * 80
+          const value = data[key][i];
+          const barHeight = (value / max) * 80;
           return (
             <rect
               key={`${key}-${i}`}
@@ -54,57 +106,44 @@ function MultiBarChart({ data }: { data: Record<string, number[]> }) {
               width={barWidth}
               height={barHeight}
               fill={
-                key === 'sent' ? '#22c55e' : key === 'delivered' ? '#3b82f6' : '#f59e0b'
+                key === 'Enviado' ? '#22c55e' : key === 'Entregue' ? '#3b82f6' : key === 'Lido' ? '#f59e0b' : '#ef4444'
               }
               rx={4}
             />
-          )
-        })
+          );
+        });
       })}
     </svg>
-  )
+  );
 }
+*/
 
 export default function ClientDashboard() {
-  const [selectedWindow, setSelectedWindow] = useState('7d')
+  const [selectedWindow, setSelectedWindow] = useState('7d');
+  // Ajuste o sessionId para o valor real da sessão do usuário
+  // Por exemplo: obtendo de um contexto de autenticação, de props, ou de um cookie.
+  const sessionId = 'brito@updata.com.br'; // Valor fixo para teste
 
-  // Dados simulados por janela temporal
-  const messageDataByWindow: Record<
-    string,
-    { sent: number[]; delivered: number[]; read: number[] }
-  > = {
-    '1h': {
-      sent: [1, 0, 2, 0, 1, 3, 1],
-      delivered: [1, 0, 1, 0, 1, 2, 1],
-      read: [0, 0, 1, 0, 0, 1, 0],
-    },
-    '24h': {
-      sent: [5, 10, 8, 15, 12, 7, 11],
-      delivered: [4, 9, 7, 13, 11, 6, 9],
-      read: [3, 7, 5, 11, 8, 4, 6],
-    },
-    '7d': {
-      sent: [35, 42, 30, 48, 40, 37, 45],
-      delivered: [33, 40, 28, 45, 38, 35, 42],
-      read: [25, 32, 22, 38, 30, 29, 33],
-    },
-    '30d': {
-      sent: [120, 130, 140, 125, 110, 115, 130],
-      delivered: [115, 125, 135, 120, 105, 110, 125],
-      read: [90, 100, 110, 95, 85, 90, 105],
-    },
-  }
+  // Use o hook useFetch com a interface DashboardApiResponse
+  const { data, error, loading, execute } = useFetch<DashboardApiResponse>();
 
-  // Somar arrays para resumo total
-  const totalSent = messageDataByWindow[selectedWindow].sent.reduce((a, b) => a + b, 0)
-  const totalDelivered = messageDataByWindow[selectedWindow].delivered.reduce(
-    (a, b) => a + b,
-    0,
-  )
-  const totalRead = messageDataByWindow[selectedWindow].read.reduce((a, b) => a + b, 0)
-  const totalFailed = totalSent - totalDelivered
-  const readRate = totalDelivered > 0 ? ((totalRead / totalDelivered) * 100).toFixed(1) : '0.0'
+  // --- Efeito para disparar a requisição de dados ---
+  useEffect(() => {
+    // Apenas faça a requisição se tivermos o sessionId e a janela selecionada
+    if (selectedWindow && sessionId) {
+      const url = `/api/dashboard?range=${selectedWindow}&sessionId=${sessionId}`;
+      execute(url);
+    }
+  }, [selectedWindow, sessionId, execute]); // `execute` como dependência, pois vem de useCallback no hook
 
+  // --- Processamento dos dados para os cards ---
+  // Inicialize os valores com 0 para garantir que sejam sempre números, mesmo antes dos dados carregarem
+  const totalMessages = data?.totalMessages ?? 0;
+  const totalSent = data?.totalSent ?? 0;
+  const totalDelivered = data?.totalDelivered ?? 0;
+  const totalRead = data?.totalRead ?? 0;
+
+  // --- Renderização do Componente ---
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold text-gray-900">Dashboard de Envio</h1>
@@ -116,13 +155,35 @@ export default function ClientDashboard() {
             key={value}
             variant={selectedWindow === value ? 'default' : 'outline'}
             onClick={() => setSelectedWindow(value)}
+            disabled={loading}
           >
             {label}
           </Button>
         ))}
       </div>
 
-      {/* Alerta (exemplo fixo) */}
+      {/* Feedback de carregamento/erro */}
+      {loading && (
+        <Card className="bg-blue-50 border-blue-300">
+          <CardContent className="flex items-center gap-4 text-blue-700">
+            <AlertCircle className="w-6 h-6 animate-pulse" />
+            <p className="font-semibold">Carregando dados do dashboard...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {error && (
+        <Card className="bg-red-50 border-red-300">
+          <CardContent className="flex items-center gap-4 text-red-700">
+            <XCircle className="w-6 h-6" />
+            <p className="font-semibold">
+              Erro ao carregar dados: {error}. Tente novamente.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Alerta (exemplo fixo, mantido conforme estava) */}
       <Card className="bg-red-50 border-red-300">
         <CardContent className="flex items-center gap-4 text-red-700">
           <AlertCircle className="w-6 h-6" />
@@ -132,47 +193,50 @@ export default function ClientDashboard() {
         </CardContent>
       </Card>
 
-      {/* Cards resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        <Card className="border border-gray-300">
-          <CardHeader>
-            <CardTitle>Total de Mensagens</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-extrabold text-gray-900">{totalSent}</p>
-          </CardContent>
-        </Card>
+      {/* Cards resumo - Renderiza apenas se não estiver carregando e não houver erro */}
+      {!loading && !error && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <Card className="border border-gray-300">
+            <CardHeader>
+              <CardTitle>Total de Mensagens</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {/* Usa totalMessages direto do data */}
+              <p className="text-4xl font-extrabold text-gray-900">{totalMessages}</p>
+            </CardContent>
+          </Card>
 
-        <Card className="border border-gray-300">
-          <CardHeader>
-            <CardTitle>Entregues</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-extrabold text-blue-600">{totalDelivered}</p>
-          </CardContent>
-        </Card>
+          <Card className="border border-gray-300">
+            <CardHeader>
+              <CardTitle>Enviadas</CardTitle> {/* Mudei para Enviadas, mas use totalSent */}
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-extrabold text-gray-900">{totalSent}</p>
+            </CardContent>
+          </Card>
 
-        <Card className="border border-gray-300">
-          <CardHeader>
-            <CardTitle>Lidas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-extrabold text-yellow-600">{totalRead}</p>
-          </CardContent>
-        </Card>
+          <Card className="border border-gray-300">
+            <CardHeader>
+              <CardTitle>Entregues</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-extrabold text-blue-600">{totalDelivered}</p>
+            </CardContent>
+          </Card>
 
-        <Card className="border border-gray-300">
-          <CardHeader>
-            <CardTitle>Falhas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-extrabold text-red-600">{totalFailed}</p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="border border-gray-300">
+            <CardHeader>
+              <CardTitle>Lidas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-extrabold text-yellow-600">{totalRead}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
 
-      {/* Gráfico com as 3 séries */}
+      {/* Gráfico com as 3 séries (oculto por enquanto) */}
       <Card>
         <CardHeader>
           <CardTitle>
@@ -181,96 +245,89 @@ export default function ClientDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <MultiBarChart data={messageDataByWindow[selectedWindow]} />
+          {/* O MultiBarChart não será renderizado agora, mas está aqui para referência futura. */}
+          {/* Quando for implementado, ele usará `histogramData` da API. */}
+          {/* <MultiBarChart data={transformedHistogramData} /> */}
+          <p className="text-muted-foreground">Gráfico do Histograma será implementado aqui.</p>
         </CardContent>
       </Card>
 
-      {/* Lista de mensagens recentes com badge leitura */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Mensagens Recentes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              {
-                id: 'msg1',
-                to: '+55 11 91234-5678',
-                status: 'success',
-                read: true,
-                date: new Date(Date.now() - 1000 * 60 * 5),
-                text: 'Olá! Seu pedido foi confirmado.',
-              },
-              {
-                id: 'msg2',
-                to: '+55 21 99876-5432',
-                status: 'error',
-                read: false,
-                date: new Date(Date.now() - 1000 * 60 * 10),
-                text: 'Não foi possível enviar sua mensagem.',
-              },
-              {
-                id: 'msg3',
-                to: '+55 31 91234-9876',
-                status: 'pending',
-                read: false,
-                date: new Date(Date.now() - 1000 * 60 * 15),
-                text: 'Processando envio...',
-              },
-            ].map(({ id, to, status, read, date, text }) => (
-              <div
-                key={id}
-                className="flex items-center justify-between border border-gray-200 rounded p-3"
-              >
-                <div>
-                  <p className="font-semibold">{to}</p>
-                  <p className="text-sm text-muted-foreground">{text}</p>
-                  <p className="text-xs text-gray-400">{formatDate(date)}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  {status === 'success' && (
-                    <Badge
-                      variant="outline"
-                      className="flex items-center gap-1 text-green-600 border-green-600"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Enviada
-                    </Badge>
-                  )}
-                  {status === 'error' && (
-                    <Badge
-                      variant="outline"
-                      className="flex items-center gap-1 text-red-600 border-red-600"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      Falhou
-                    </Badge>
-                  )}
-                  {status === 'pending' && (
-                    <Badge
-                      variant="outline"
-                      className="flex items-center gap-1 text-yellow-600 border-yellow-600"
-                    >
-                      <AlertCircle className="w-4 h-4" />
-                      Pendente
-                    </Badge>
-                  )}
+      {!loading && !error && data?.recentMessages && data.recentMessages.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Mensagens Recentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.recentMessages.map((message) => {
+                const statusInfo = mapStatusNumberToDisplay[message.status] || { text: 'Desconhecido', type: 'pending' };
+                const showReadBadge = statusInfo.showReadBadge || false;
 
-                  {read && status === 'success' && (
-                    <Badge
-                      variant="outline"
-                      className="flex items-center gap-1 text-yellow-600 border-yellow-600"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Lida
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                const badgeVariant: "outline" = "outline";
+                let badgeTextColor = 'text-gray-600';
+                let badgeBorderColor = 'border-gray-600';
+                let badgeIcon = <AlertCircle className="w-4 h-4" />;
+
+                if (statusInfo.type === 'success') {
+                  badgeTextColor = 'text-green-600';
+                  badgeBorderColor = 'border-green-600';
+                  badgeIcon = <CheckCircle className="w-4 h-4" />;
+                } else if (statusInfo.type === 'error') {
+                  badgeTextColor = 'text-red-600';
+                  badgeBorderColor = 'border-red-600';
+                  badgeIcon = <XCircle className="w-4 h-4" />;
+                } else if (statusInfo.type === 'pending') {
+                  badgeTextColor = 'text-yellow-600';
+                  badgeBorderColor = 'border-yellow-600';
+                  badgeIcon = <AlertCircle className="w-4 h-4" />;
+                }
+
+                return (
+                  <div
+                    key={message.messageId}
+                    className="flex items-start justify-between border border-gray-200 rounded p-3"
+                  >
+                    {/* Alterações para responsividade do texto: max-w, overflow-hidden e ajuste de flex */}
+                    <div className="flex-1 min-w-0 pr-2 max-w-[calc(100%-80px)] overflow-hidden">
+                      <p className="font-semibold">+{message.to}</p>
+                      <p className="text-sm text-muted-foreground break-words">{message.content}</p>
+                      <p className="text-xs text-gray-400">{formatDate(new Date(message.sentAt))}</p>
+                    </div>
+                    {/* flex-shrink-0 para garantir que os badges não encolham */}
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <Badge
+                        variant={badgeVariant}
+                        className={`flex items-center gap-1 ${badgeTextColor} ${badgeBorderColor}`}
+                      >
+                        {badgeIcon}
+                        {statusInfo.text}
+                      </Badge>
+
+                      {showReadBadge && (
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1 text-yellow-600 border-yellow-600"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Lida
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && !error && (!data || (data.recentMessages && data.recentMessages.length === 0)) && (
+        <Card>
+          <CardContent className="p-6 text-center text-muted-foreground">
+            Nenhuma mensagem recente encontrada para a janela selecionada.
+          </CardContent>
+        </Card>
+      )}
     </div>
-  )
+  );
 }
