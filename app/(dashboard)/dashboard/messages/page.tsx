@@ -14,34 +14,13 @@ import { useFetch } from '../session/useFetch';
 
 import RecentMessagesCard from './RecentMessagesCard';
 import { useCountUp } from './hooks/useCountUp';
+import InsightCard from './InsightCard';
+import { DashboardApiResponse } from '@/types/dashboard-api-response';
 
 // --- Interfaces ---
+// É uma boa prática mover interfaces para um arquivo separado, ex: types/dashboard.ts
 export type MessageStatusString = 'Erro' | 'Pendente' | 'Enviado' | 'Entregue' | 'Lido' | 'Reproduzido' | 'Desconhecido';
 
-export interface RecentMessage {
-  sessionId: string;
-  messageId: string;
-  to: string;
-  content: string;
-  sentAt: number;
-  status: number;
-}
-
-export interface DashboardApiResponse {
-  totalMessages: number;
-  totalSent: number;
-  totalDelivered: number;
-  totalRead: number;
-  totalError: number;
-  totalPending: number;
-  deliveryRate: number;
-  readRate: number;
-  errorRate: number;
-  pendingRate: number;
-  undeliveredMessages: number;
-  deliveredButUnreadMessages: number;
-  recentMessages: RecentMessage[];
-}
 
 // Opções de período
 const TIME_WINDOWS = [
@@ -50,8 +29,6 @@ const TIME_WINDOWS = [
   { label: 'Últimos 7 dias', value: '7d' },
   { label: 'Últimos 30 dias', value: '30d' },
 ];
-
-// REMOVIDO: useCountUp hook (agora importado)
 
 // --- Componente para mostrar o percentual com barra ---
 interface PercentCardProps {
@@ -106,30 +83,7 @@ function PercentDashboard({
   );
 }
 
-// --- Novo componente para Insights (resultados diretos) ---
-interface InsightCardProps {
-  icon: React.ReactNode;
-  title: string;
-  value: number;
-  description: string;
-  color: string;
-}
-
-function InsightCard({ icon, title, value, description, color }: InsightCardProps) {
-  return (
-    <Card className="border border-gray-300">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold" style={{ color }}>
-          {icon} {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-4xl font-extrabold" style={{ color }}>{value}</p>
-        <p className="text-sm text-muted-foreground mt-1">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
+// REMOVIDO: InsightCard (agora importado)
 
 export default function ClientDashboard() {
   const [selectedWindow, setSelectedWindow] = useState('7d');
@@ -160,12 +114,11 @@ export default function ClientDashboard() {
 
   const recentMessages = data?.recentMessages ?? [];
 
-  // Animação dos totais - AGORA USANDO O HOOK IMPORTADO
+  // Animação dos totais
   const animatedTotalMessages = useCountUp(!loading && !error ? totalMessages : 0);
   const animatedTotalSent = useCountUp(!loading && !error ? totalSent : 0);
   const animatedTotalDelivered = useCountUp(!loading && !error ? totalDelivered : 0);
   const animatedTotalRead = useCountUp(!loading && !error ? totalRead : 0);
-
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
@@ -263,7 +216,7 @@ export default function ClientDashboard() {
         />
       )}
 
-      {/* Bloco Insights */}
+      {/* Bloco Insights - AGORA USANDO O COMPONENTE IMPORTADO */}
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           <InsightCard
