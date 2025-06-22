@@ -1,18 +1,21 @@
+// app/ClientDashboard.tsx
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { AlertCircle, XCircle, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFetch } from '../session/useFetch';
 
-// --- Interfaces (mesmo que antes) ---
+import RecentMessagesCard from './RecentMessagesCard';
+import { useCountUp } from './hooks/useCountUp';
+
+// --- Interfaces ---
 export type MessageStatusString = 'Erro' | 'Pendente' | 'Enviado' | 'Entregue' | 'Lido' | 'Reproduzido' | 'Desconhecido';
 
 export interface RecentMessage {
@@ -48,60 +51,7 @@ const TIME_WINDOWS = [
   { label: 'Últimos 30 dias', value: '30d' },
 ];
 
-// Função para formatar data no padrão local
-function formatDate(date: Date) {
-  return date.toLocaleString();
-}
-
-// Mapeamento de status numéricos para string e para o status de badge
-const mapStatusNumberToDisplay: Record<number, { text: string, type: 'success' | 'error' | 'pending', showReadBadge?: boolean }> = {
-  0: { text: 'Erro', type: 'error' },
-  1: { text: 'Pendente', type: 'pending' },
-  2: { text: 'Enviada', type: 'success' },
-  3: { text: 'Entregue', type: 'success' },
-  4: { text: 'Lida', type: 'success', showReadBadge: true },
-};
-
-// --- Hook para contagem animada ---
-function useCountUp(targetNumber: number, duration = 250): number {
-  const [count, setCount] = useState(0);
-  const rafId = useRef<number | null>(null);
-  const startTimestamp = useRef<number | null>(null);
-  const previousTarget = useRef<number>(targetNumber);
-
-  useEffect(() => {
-    if (targetNumber === previousTarget.current) {
-      setCount(targetNumber);
-      return;
-    }
-
-    startTimestamp.current = null;
-
-    function step(timestamp: number) {
-      if (!startTimestamp.current) startTimestamp.current = timestamp;
-      const progress = timestamp - startTimestamp.current;
-      const progressRatio = Math.min(progress / duration, 1);
-      const nextCount = Math.floor(progressRatio * targetNumber);
-      setCount(nextCount);
-      if (progress < duration) {
-        rafId.current = requestAnimationFrame(step);
-      } else {
-        setCount(targetNumber);
-        previousTarget.current = targetNumber;
-      }
-    }
-
-    rafId.current = requestAnimationFrame(step);
-
-    return () => {
-      if (rafId.current !== null) {
-        cancelAnimationFrame(rafId.current);
-      }
-    };
-  }, [targetNumber, duration]);
-
-  return count;
-}
+// REMOVIDO: useCountUp hook (agora importado)
 
 // --- Componente para mostrar o percentual com barra ---
 interface PercentCardProps {
@@ -141,16 +91,16 @@ function PercentDashboard({
   readRate: number;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8"> {/* Ajustado para 2 colunas */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
       <PercentCard
         title="Taxa de Entrega"
         percentage={deliveryRate}
-        color="#2196F3" // azul
+        color="#2196F3"
       />
       <PercentCard
         title="Taxa de Leitura"
         percentage={readRate}
-        color="#FFC107" // amarelo
+        color="#FFC107"
       />
     </div>
   );
@@ -204,15 +154,13 @@ export default function ClientDashboard() {
 
   const deliveryRate = data?.deliveryRate ?? 0;
   const readRate = data?.readRate ?? 0;
-  // Removi errorRate e pendingRate da desestruturação aqui, pois não são mais passados para PercentDashboard
-  // Mas ainda os mantenho se forem usados em outras partes, como InsightCards.
 
   const undeliveredMessages = data?.undeliveredMessages ?? 0;
   const deliveredButUnreadMessages = data?.deliveredButUnreadMessages ?? 0;
 
   const recentMessages = data?.recentMessages ?? [];
 
-  // Animação dos totais
+  // Animação dos totais - AGORA USANDO O HOOK IMPORTADO
   const animatedTotalMessages = useCountUp(!loading && !error ? totalMessages : 0);
   const animatedTotalSent = useCountUp(!loading && !error ? totalSent : 0);
   const animatedTotalDelivered = useCountUp(!loading && !error ? totalDelivered : 0);
@@ -268,7 +216,7 @@ export default function ClientDashboard() {
 
       {/* Bloco Totais */}
       {!loading && !error && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"> {/* Mantido 4 colunas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           <Card className="border border-gray-300">
             <CardHeader>
               <CardTitle>Total Disparadas</CardTitle>
@@ -307,16 +255,15 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* Bloco Percentuais (agora apenas com Taxa de Entrega e Leitura) */}
+      {/* Bloco Percentuais */}
       {!loading && !error && (
         <PercentDashboard
           deliveryRate={deliveryRate}
           readRate={readRate}
-        // errorRate e pendingRate não são mais passados aqui
         />
       )}
 
-      {/* Bloco Insights (permanecem com os 4 insights detalhados) */}
+      {/* Bloco Insights */}
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           <InsightCard
@@ -350,80 +297,9 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* Bloco Mensagens Recentes */}
+      {/* NOVO: Bloco de Mensagens Recentes usando o componente separado */}
       {!loading && !error && recentMessages.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Mensagens Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentMessages.map((message) => {
-                const statusInfo = mapStatusNumberToDisplay[message.status] || { text: 'Desconhecido', type: 'pending' };
-                const showReadBadge = statusInfo.showReadBadge || false;
-
-                const badgeVariant: "outline" = "outline";
-                let badgeTextColor = 'text-gray-600';
-                let badgeBorderColor = 'border-gray-600';
-                let badgeIcon = <AlertCircle className="w-4 h-4" />;
-
-                if (statusInfo.type === 'success') {
-                  badgeTextColor = 'text-green-600';
-                  badgeBorderColor = 'border-green-600';
-                  badgeIcon = <CheckCircle className="w-4 h-4" />;
-                } else if (statusInfo.type === 'error') {
-                  badgeTextColor = 'text-red-600';
-                  badgeBorderColor = 'border-red-600';
-                  badgeIcon = <XCircle className="w-4 h-4" />;
-                } else if (statusInfo.type === 'pending') {
-                  badgeTextColor = 'text-yellow-600';
-                  badgeBorderColor = 'border-yellow-600';
-                  badgeIcon = <AlertCircle className="w-4 h-4" />;
-                }
-
-                return (
-                  <div
-                    key={message.messageId}
-                    className="flex items-start justify-between border border-gray-200 rounded p-3"
-                  >
-                    <div className="flex-1 min-w-0 pr-2 max-w-[calc(100%-80px)] overflow-hidden">
-                      <p className="font-semibold">+{message.to}</p>
-                      <p className="text-sm text-muted-foreground break-words">{message.content}</p>
-                      <p className="text-xs text-gray-400">{formatDate(new Date(message.sentAt))}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <Badge
-                        variant={badgeVariant}
-                        className={`flex items-center gap-1 ${badgeTextColor} ${badgeBorderColor}`}
-                      >
-                        {badgeIcon}
-                        {statusInfo.text}
-                      </Badge>
-
-                      {showReadBadge && (
-                        <Badge
-                          variant="outline"
-                          className="flex items-center gap-1 text-yellow-600 border-yellow-600"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Lida
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {!loading && !error && recentMessages.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            Nenhuma mensagem recente encontrada para a janela selecionada.
-          </CardContent>
-        </Card>
+        <RecentMessagesCard recentMessages={recentMessages} />
       )}
     </div>
   );
