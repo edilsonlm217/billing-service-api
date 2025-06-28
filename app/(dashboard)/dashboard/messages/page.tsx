@@ -1,4 +1,3 @@
-// app/ClientDashboard.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -16,11 +15,7 @@ import RecentMessagesCard from './RecentMessagesCard';
 import { useCountUp } from './hooks/useCountUp';
 import InsightCard from './InsightCard';
 import { DashboardApiResponse } from '@/types/dashboard-api-response';
-
-// --- Interfaces ---
-// É uma boa prática mover interfaces para um arquivo separado, ex: types/dashboard.ts
-export type MessageStatusString = 'Erro' | 'Pendente' | 'Enviado' | 'Entregue' | 'Lido' | 'Reproduzido' | 'Desconhecido';
-
+import PercentDashboard from './PercentDashboard';
 
 // Opções de período
 const TIME_WINDOWS = [
@@ -29,61 +24,6 @@ const TIME_WINDOWS = [
   { label: 'Últimos 7 dias', value: '7d' },
   { label: 'Últimos 30 dias', value: '30d' },
 ];
-
-// --- Componente para mostrar o percentual com barra ---
-interface PercentCardProps {
-  title: string;
-  percentage: number; // 0-100
-  color: string;
-}
-
-function PercentCard({ title, percentage, color }: PercentCardProps) {
-  return (
-    <Card className="border border-gray-300">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between">
-          <span className="text-3xl font-extrabold text-gray-900">{percentage.toFixed(1)}%</span>
-          <span className="text-sm text-gray-500">dos totais</span>
-        </div>
-        <div className="w-full h-3 mt-3 rounded bg-gray-200 overflow-hidden">
-          <div
-            className="h-3 rounded"
-            style={{ width: `${percentage}%`, backgroundColor: color }}
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Container para os percentuais
-function PercentDashboard({
-  deliveryRate,
-  readRate,
-}: {
-  deliveryRate: number;
-  readRate: number;
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-      <PercentCard
-        title="Taxa de Entrega"
-        percentage={deliveryRate}
-        color="#2196F3"
-      />
-      <PercentCard
-        title="Taxa de Leitura"
-        percentage={readRate}
-        color="#FFC107"
-      />
-    </div>
-  );
-}
-
-// REMOVIDO: InsightCard (agora importado)
 
 export default function ClientDashboard() {
   const [selectedWindow, setSelectedWindow] = useState('7d');
@@ -98,7 +38,7 @@ export default function ClientDashboard() {
     }
   }, [selectedWindow, sessionId, execute]);
 
-  // Desestruturando TODOS os dados da API
+  // Desestruturando dados da API
   const totalSent = data?.totalSent ?? 0;
   const totalDelivered = data?.totalDelivered ?? 0;
   const totalRead = data?.totalRead ?? 0;
@@ -113,6 +53,9 @@ export default function ClientDashboard() {
   const deliveredButUnreadMessages = data?.deliveredButUnreadMessages ?? 0;
 
   const recentMessages = data?.recentMessages ?? [];
+
+  const sessionState = data?.sessionState ?? null;
+  const sessionDisconnected = sessionState?.status === 'close';
 
   // Animação dos totais
   const animatedTotalMessages = useCountUp(!loading && !error ? totalMessages : 0);
@@ -157,17 +100,22 @@ export default function ClientDashboard() {
         </Card>
       )}
 
-      {/* Exemplo de aviso de sessão desconectada (se for uma lógica de frontend) */}
-      <Card className="bg-red-50 border-red-300">
-        <CardContent className="flex items-center gap-4 text-red-700">
-          <AlertCircle className="w-6 h-6" />
-          <p className="font-semibold">
-            Sessão desconectada! As mensagens não estão sendo enviadas.
-          </p>
-        </CardContent>
-      </Card>
+      {sessionDisconnected && (
+        <Card className="bg-red-50 border-red-300">
+          <CardContent className="flex items-center gap-4 text-red-700">
+            <AlertCircle className="w-6 h-6" />
+            <div>
+              <p className="font-semibold">
+                Sessão desconectada!
+              </p>
+              <p className="text-sm">
+                A sessão foi encerrada e precisa ser reiniciada para que as mensagens possam ser enviadas.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Bloco Totais */}
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           <Card className="border border-gray-300">
@@ -208,7 +156,6 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* Bloco Percentuais */}
       {!loading && !error && (
         <PercentDashboard
           deliveryRate={deliveryRate}
@@ -216,7 +163,6 @@ export default function ClientDashboard() {
         />
       )}
 
-      {/* Bloco Insights - AGORA USANDO O COMPONENTE IMPORTADO */}
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           <InsightCard
@@ -250,7 +196,6 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* NOVO: Bloco de Mensagens Recentes usando o componente separado */}
       {!loading && !error && recentMessages.length > 0 && (
         <RecentMessagesCard recentMessages={recentMessages} />
       )}
