@@ -26,12 +26,12 @@ export default function ClientDashboard() {
   }, [selectedWindow, sessionId, execute]);
 
   // Desestruturando dados da API
-  const totalSent = data?.totalSent ?? 0;
-  const totalDelivered = data?.totalDelivered ?? 0;
-  const totalRead = data?.totalRead ?? 0;
+  const totalSent = data?.totalSent;
+  const totalDelivered = data?.totalDelivered;
+  const totalRead = data?.totalRead;
   const totalError = data?.totalError ?? 0;
   const totalPending = data?.totalPending ?? 0;
-  const totalMessages = data?.totalMessages ?? 0;
+  const totalMessages = data?.totalMessages;
 
   const deliveryRate = data?.deliveryRate ?? 0;
   const readRate = data?.readRate ?? 0;
@@ -53,15 +53,6 @@ export default function ClientDashboard() {
         onChange={setSelectedWindow}
         disabled={loading}
       />
-
-      {loading && (
-        <Card className="bg-blue-50 border-blue-300">
-          <CardContent className="flex items-center gap-4 text-blue-700">
-            <AlertCircle className="w-6 h-6 animate-pulse" />
-            <p className="font-semibold">Carregando dados do dashboard...</p>
-          </CardContent>
-        </Card>
-      )}
 
       {error && (
         <Card className="bg-red-50 border-red-300">
@@ -90,14 +81,12 @@ export default function ClientDashboard() {
         </Card>
       )}
 
-      {!loading && !error && (
-        <MetricCards
-          totalMessages={!loading && !error ? totalMessages : 0}
-          totalSent={!loading && !error ? totalSent : 0}
-          totalDelivered={!loading && !error ? totalDelivered : 0}
-          totalRead={!loading && !error ? totalRead : 0}
-        />
-      )}
+      <MetricCards
+        totalMessages={totalMessages}
+        totalSent={totalSent}
+        totalDelivered={totalDelivered}
+        totalRead={totalRead}
+      />
 
       {!loading && !error && (
         <PercentDashboard
