@@ -1,21 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, XCircle, Eye } from 'lucide-react';
 import { useFetch } from '../session/useFetch';
 
 import RecentMessagesCard from './RecentMessagesCard';
-import { useCountUp } from './hooks/useCountUp';
 import InsightCard from './InsightCard';
 import { DashboardApiResponse } from '@/types/dashboard-api-response';
 import PercentDashboard from './PercentDashboard';
 import TimeWindowSelector from './TimeWindowSelector';
+import MetricCards from './MetricCards';
 
 export default function ClientDashboard() {
   const [selectedWindow, setSelectedWindow] = useState('7d');
@@ -48,12 +43,6 @@ export default function ClientDashboard() {
 
   const sessionState = data?.sessionState ?? null;
   const sessionDisconnected = sessionState?.status === 'close';
-
-  // Animação dos totais
-  const animatedTotalMessages = useCountUp(!loading && !error ? totalMessages : 0);
-  const animatedTotalSent = useCountUp(!loading && !error ? totalSent : 0);
-  const animatedTotalDelivered = useCountUp(!loading && !error ? totalDelivered : 0);
-  const animatedTotalRead = useCountUp(!loading && !error ? totalRead : 0);
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
@@ -102,43 +91,12 @@ export default function ClientDashboard() {
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <Card className="border border-gray-300">
-            <CardHeader>
-              <CardTitle>Total Disparadas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-extrabold text-gray-900">{animatedTotalMessages}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-300">
-            <CardHeader>
-              <CardTitle>Enviadas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-extrabold text-gray-900">{animatedTotalSent}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-300">
-            <CardHeader>
-              <CardTitle>Entregues</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-extrabold text-blue-600">{animatedTotalDelivered}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-300">
-            <CardHeader>
-              <CardTitle>Lidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-extrabold text-yellow-600">{animatedTotalRead}</p>
-            </CardContent>
-          </Card>
-        </div>
+        <MetricCards
+          totalMessages={!loading && !error ? totalMessages : 0}
+          totalSent={!loading && !error ? totalSent : 0}
+          totalDelivered={!loading && !error ? totalDelivered : 0}
+          totalRead={!loading && !error ? totalRead : 0}
+        />
       )}
 
       {!loading && !error && (
