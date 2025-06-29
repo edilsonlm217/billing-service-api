@@ -51,8 +51,9 @@ export default function ClientDashboard() {
       <TimeWindowSelector
         selectedWindow={selectedWindow}
         onChange={setSelectedWindow}
-        disabled={loading}
+        disabled={loading || !data} // desabilita até os dados estarem disponíveis
       />
+
 
       {error && (
         <Card className="bg-red-50 border-red-300">
