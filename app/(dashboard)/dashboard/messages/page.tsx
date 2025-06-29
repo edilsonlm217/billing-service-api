@@ -33,8 +33,8 @@ export default function ClientDashboard() {
   const totalPending = data?.totalPending ?? 0;
   const totalMessages = data?.totalMessages;
 
-  const deliveryRate = data?.deliveryRate ?? 0;
-  const readRate = data?.readRate ?? 0;
+  const deliveryRate = data?.deliveryRate;
+  const readRate = data?.readRate;
 
   const undeliveredMessages = data?.undeliveredMessages ?? 0;
   const deliveredButUnreadMessages = data?.deliveredButUnreadMessages ?? 0;
@@ -53,7 +53,6 @@ export default function ClientDashboard() {
         onChange={setSelectedWindow}
         disabled={loading || !data} // desabilita até os dados estarem disponíveis
       />
-
 
       {error && (
         <Card className="bg-red-50 border-red-300">
@@ -89,12 +88,11 @@ export default function ClientDashboard() {
         totalRead={totalRead}
       />
 
-      {!loading && !error && (
-        <PercentDashboard
-          deliveryRate={deliveryRate}
-          readRate={readRate}
-        />
-      )}
+      <PercentDashboard
+        deliveryRate={deliveryRate}
+        readRate={readRate}
+        loading={loading || !data}
+      />
 
       {!loading && !error && (
         <InsightsGrid
