@@ -6,11 +6,11 @@ import { AlertCircle, XCircle, Eye } from 'lucide-react';
 import { useFetch } from '../session/useFetch';
 
 import RecentMessagesCard from './RecentMessagesCard';
-import InsightCard from './InsightCard';
 import { DashboardApiResponse } from '@/types/dashboard-api-response';
 import PercentDashboard from './PercentDashboard';
 import TimeWindowSelector from './TimeWindowSelector';
 import MetricCards from './MetricCards';
+import InsightsGrid from './InsightsGrid';
 
 export default function ClientDashboard() {
   const [selectedWindow, setSelectedWindow] = useState('7d');
@@ -107,36 +107,12 @@ export default function ClientDashboard() {
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          <InsightCard
-            icon={<XCircle className="w-6 h-6" />}
-            title="Mensagens Não Entregues"
-            value={undeliveredMessages}
-            description="Mensagens enviadas que não chegaram ao destinatário."
-            color="#F44336"
-          />
-          <InsightCard
-            icon={<Eye className="w-6 h-6" />}
-            title="Mensagens Entregues Não Lidas"
-            value={deliveredButUnreadMessages}
-            description="Mensagens entregues mas que ainda não foram abertas."
-            color="#FFC107"
-          />
-          <InsightCard
-            icon={<XCircle className="w-6 h-6" />}
-            title="Mensagens com Erro"
-            value={totalError}
-            description="Mensagens que retornaram erro ao enviar."
-            color="#E91E63"
-          />
-          <InsightCard
-            icon={<AlertCircle className="w-6 h-6" />}
-            title="Mensagens Pendentes"
-            value={totalPending}
-            description="Mensagens aguardando processamento ou envio."
-            color="#FFA726"
-          />
-        </div>
+        <InsightsGrid
+          undelivered={undeliveredMessages}
+          unread={deliveredButUnreadMessages}
+          error={totalError}
+          pending={totalPending}
+        />
       )}
 
       {!loading && !error && recentMessages.length > 0 && (
