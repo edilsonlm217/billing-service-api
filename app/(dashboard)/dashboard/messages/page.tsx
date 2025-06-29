@@ -8,7 +8,6 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { AlertCircle, XCircle, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useFetch } from '../session/useFetch';
 
 import RecentMessagesCard from './RecentMessagesCard';
@@ -16,14 +15,7 @@ import { useCountUp } from './hooks/useCountUp';
 import InsightCard from './InsightCard';
 import { DashboardApiResponse } from '@/types/dashboard-api-response';
 import PercentDashboard from './PercentDashboard';
-
-// Opções de período
-const TIME_WINDOWS = [
-  { label: 'Última 1 hora', value: '1h' },
-  { label: 'Últimas 24 horas', value: '24h' },
-  { label: 'Últimos 7 dias', value: '7d' },
-  { label: 'Últimos 30 dias', value: '30d' },
-];
+import TimeWindowSelector from './TimeWindowSelector';
 
 export default function ClientDashboard() {
   const [selectedWindow, setSelectedWindow] = useState('7d');
@@ -67,18 +59,11 @@ export default function ClientDashboard() {
     <div className="max-w-5xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold text-gray-900">Dashboard de Envio</h1>
 
-      <div className="flex gap-4 mb-6">
-        {TIME_WINDOWS.map(({ label, value }) => (
-          <Button
-            key={value}
-            variant={selectedWindow === value ? 'default' : 'outline'}
-            onClick={() => setSelectedWindow(value)}
-            disabled={loading}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <TimeWindowSelector
+        selectedWindow={selectedWindow}
+        onChange={setSelectedWindow}
+        disabled={loading}
+      />
 
       {loading && (
         <Card className="bg-blue-50 border-blue-300">
