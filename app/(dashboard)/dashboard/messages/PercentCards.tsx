@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useCountUp } from './hooks/useCountUp';
 
 interface PercentCardProps {
   title: string;
@@ -8,6 +9,13 @@ interface PercentCardProps {
 }
 
 export function PercentCard({ title, percentage, color }: PercentCardProps) {
+  const [target, setTarget] = useState(0);
+  const animatedPercentage = useCountUp(target);
+
+  useEffect(() => {
+    setTarget(percentage);
+  }, [percentage]);
+
   return (
     <Card className="border border-gray-300">
       <CardHeader>
@@ -15,7 +23,9 @@ export function PercentCard({ title, percentage, color }: PercentCardProps) {
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between">
-          <span className="text-3xl font-extrabold text-gray-900">{percentage.toFixed(1)}%</span>
+          <span className="text-3xl font-extrabold text-gray-900">
+            {animatedPercentage.toFixed(1)}%
+          </span>
           <span className="text-sm text-gray-500">dos totais</span>
         </div>
         <div className="w-full h-3 mt-3 rounded bg-gray-200 overflow-hidden">
