@@ -12,9 +12,12 @@ import TimeWindowSelector from './TimeWindowSelector';
 import MetricCards from './MetricCards';
 import InsightsGrid from './InsightsGrid';
 
-export default function ClientDashboard() {
+interface ClientDashboardProps {
+  sessionId: string;
+}
+
+export default function ClientDashboard({ sessionId }: ClientDashboardProps) {
   const [selectedWindow, setSelectedWindow] = useState('7d');
-  const sessionId = 'brito@updata.com.br'; // Mantenha isso dinâmico em produção
 
   const { data, error, loading, execute } = useFetch<DashboardApiResponse>();
 
@@ -108,7 +111,6 @@ export default function ClientDashboard() {
           loading={loading || !data}
         />
       )}
-      
     </div>
   );
 }
