@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Users, Settings, Shield, Activity, Menu, Send, MessageCircle, HouseIcon } from 'lucide-react';
+import { Users, Settings, Menu, Home, CreditCard, Key } from 'lucide-react';
 
 export default function DashboardLayout({
   children
@@ -15,13 +15,11 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
-    { href: '/dashboard/subscription', icon: Users, label: 'Assinatura' },
+    { href: '/dashboard', icon: Home, label: 'Início' },
+    { href: '/dashboard/subscription', icon: CreditCard, label: 'Assinatura' },
+    { href: '/dashboard/session', icon: Users, label: 'Gerenciar Sessão' },
+    { href: '/dashboard/api-keys', icon: Key, label: 'Chaves de API' },
     { href: '/dashboard/general', icon: Settings, label: 'General' },
-    // { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
-    // { href: '/dashboard/security', icon: Shield, label: 'Security' },
-    { href: '/dashboard/session', icon: Send, label: 'Gerenciar Sessão' },
-    { href: '/dashboard/messages', icon: MessageCircle, label: 'Messages' },
-    { href: '/dashboard/api-keys', icon: MessageCircle, label: 'Chaves de API' },
   ];
 
   return (
