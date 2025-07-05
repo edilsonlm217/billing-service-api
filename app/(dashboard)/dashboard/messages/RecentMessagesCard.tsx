@@ -69,7 +69,19 @@ export default function RecentMessagesCard({ recentMessages }: RecentMessagesCar
               >
                 <div className="flex-1 min-w-0 pr-2 max-w-[calc(100%-80px)] overflow-hidden">
                   <p className="font-semibold">+{message.to}</p>
-                  <p className="text-sm text-muted-foreground break-words">{message.content}</p>
+                  <p
+                    className="text-sm text-muted-foreground break-words"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {message.content}
+                  </p>
+
                   <p className="text-xs text-gray-400">{formatDate(new Date(message.sentAt))}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
