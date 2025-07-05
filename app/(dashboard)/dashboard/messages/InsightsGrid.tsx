@@ -8,6 +8,7 @@ interface InsightsGridProps {
   unread: number;
   error: number;
   pending: number;
+  loading?: boolean;
 }
 
 export default function InsightsGrid({
@@ -15,6 +16,7 @@ export default function InsightsGrid({
   unread,
   error,
   pending,
+  loading = false,
 }: InsightsGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -24,6 +26,7 @@ export default function InsightsGrid({
         value={undelivered}
         description="Mensagens enviadas que não chegaram ao destinatário."
         color="#F44336"
+        loading={loading}
       />
       <InsightCard
         icon={<Eye className="w-6 h-6" />}
@@ -31,6 +34,7 @@ export default function InsightsGrid({
         value={unread}
         description="Mensagens entregues mas que ainda não foram abertas."
         color="#FFC107"
+        loading={loading}
       />
       <InsightCard
         icon={<XCircle className="w-6 h-6" />}
@@ -38,6 +42,7 @@ export default function InsightsGrid({
         value={error}
         description="Mensagens que retornaram erro ao enviar."
         color="#E91E63"
+        loading={loading}
       />
       <InsightCard
         icon={<AlertCircle className="w-6 h-6" />}
@@ -45,6 +50,7 @@ export default function InsightsGrid({
         value={pending}
         description="Mensagens aguardando processamento ou envio."
         color="#FFA726"
+        loading={loading}
       />
     </div>
   );

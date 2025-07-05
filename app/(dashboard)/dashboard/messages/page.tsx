@@ -94,14 +94,13 @@ export default function ClientDashboard() {
         loading={loading || !data}
       />
 
-      {!loading && !error && (
-        <InsightsGrid
-          undelivered={undeliveredMessages}
-          unread={deliveredButUnreadMessages}
-          error={totalError}
-          pending={totalPending}
-        />
-      )}
+      <InsightsGrid
+        undelivered={undeliveredMessages}
+        unread={deliveredButUnreadMessages}
+        error={totalError}
+        pending={totalPending}
+        loading={loading || !data}
+      />
 
       {!loading && !error && recentMessages.length > 0 && (
         <RecentMessagesCard recentMessages={recentMessages} />
