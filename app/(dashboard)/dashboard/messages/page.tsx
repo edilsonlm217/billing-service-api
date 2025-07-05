@@ -102,9 +102,13 @@ export default function ClientDashboard() {
         loading={loading || !data}
       />
 
-      {!loading && !error && recentMessages.length > 0 && (
-        <RecentMessagesCard recentMessages={recentMessages} />
+      {!error && (
+        <RecentMessagesCard
+          recentMessages={recentMessages}
+          loading={loading || !data}
+        />
       )}
+      
     </div>
   );
 }

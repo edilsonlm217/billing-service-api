@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { RecentMessage } from '@/types/recent-message';
 import { getBadgesForStatus, BadgeInfo } from './utils/getBadgesForStatus';
+import { Skeleton } from '@/components/ui/skeleton'; // Importe o Skeleton
 
 function formatDate(date: Date) {
   return date.toLocaleString();
@@ -36,9 +37,42 @@ function renderBadgeIcon(name: string) {
 
 interface RecentMessagesCardProps {
   recentMessages: RecentMessage[];
+  loading?: boolean; // nova prop para controlar loading
 }
 
-export default function RecentMessagesCard({ recentMessages }: RecentMessagesCardProps) {
+export default function RecentMessagesCard({ recentMessages, loading = false }: RecentMessagesCardProps) {
+  if (loading) {
+    // Skeleton loading completo (título + alguns cards "fakes")
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-40" /> {/* Skeleton para o título */}
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3].map((key) => (
+              <div
+                key={key}
+                className="flex items-start justify-between border border-gray-200 rounded p-3 animate-pulse"
+              >
+                <div className="flex-1 min-w-0 pr-2 max-w-[calc(100%-80px)]">
+                  <Skeleton className="h-5 w-24 mb-1" /> {/* Skeleton para telefone */}
+                  <Skeleton className="h-4 w-full mb-1" /> {/* Skeleton para mensagem (linha 1) */}
+                  <Skeleton className="h-4 w-5/6 mb-1" /> {/* Skeleton para mensagem (linha 2) */}
+                  <Skeleton className="h-3 w-16" /> {/* Skeleton para data */}
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <Skeleton className="h-6 w-16" /> {/* Skeleton para badge */}
+                  <Skeleton className="h-6 w-12" /> {/* Skeleton para badge secundária, se houver */}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (recentMessages.length === 0) {
     return (
       <Card>
