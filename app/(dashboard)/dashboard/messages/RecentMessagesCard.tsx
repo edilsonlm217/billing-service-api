@@ -1,87 +1,36 @@
-// components/RecentMessagesCard.tsx
+'use client';
+
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, XCircle, Eye } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Eye,
+  HelpCircle,
+} from 'lucide-react';
 import { RecentMessage } from '@/types/recent-message';
-
-type BadgeType = 'success' | 'error' | 'pending';
-
-interface BadgeInfo {
-  text: string;
-  type: BadgeType;
-  icon: React.ReactNode;
-  colorClass: string;  // Tailwind text color
-  borderClass: string; // Tailwind border color
-}
-
-const badgeDefinitions: Record<string, BadgeInfo> = {
-  Enviada: {
-    text: 'Enviada',
-    type: 'success',
-    icon: <CheckCircle className="w-4 h-4" />,
-    colorClass: 'text-green-600',
-    borderClass: 'border-green-600',
-  },
-  Entregue: {
-    text: 'Entregue',
-    type: 'success',
-    icon: <CheckCircle className="w-4 h-4" />,
-    colorClass: 'text-blue-600',
-    borderClass: 'border-blue-600',
-  },
-  Lida: {
-    text: 'Lida',
-    type: 'success',
-    icon: <Eye className="w-4 h-4" />,
-    colorClass: 'text-yellow-600',
-    borderClass: 'border-yellow-600',
-  },
-  Pendente: {
-    text: 'Pendente',
-    type: 'pending',
-    icon: <AlertCircle className="w-4 h-4" />,
-    colorClass: 'text-yellow-600',
-    borderClass: 'border-yellow-600',
-  },
-  Erro: {
-    text: 'Erro',
-    type: 'error',
-    icon: <XCircle className="w-4 h-4" />,
-    colorClass: 'text-red-600',
-    borderClass: 'border-red-600',
-  },
-  Desconhecido: {
-    text: 'Desconhecido',
-    type: 'pending',
-    icon: <AlertCircle className="w-4 h-4" />,
-    colorClass: 'text-gray-600',
-    borderClass: 'border-gray-600',
-  },
-};
+import { getBadgesForStatus, BadgeInfo } from './utils/getBadgesForStatus';
 
 function formatDate(date: Date) {
   return date.toLocaleString();
 }
 
-function getBadgesForStatus(status: number): BadgeInfo[] {
-  switch (status) {
-    case 0: // Erro
-      return [badgeDefinitions.Erro];
-    case 1: // Pendente
-      return [badgeDefinitions.Pendente];
-    case 2: // Enviada
-      return [badgeDefinitions.Enviada];
-    case 3: // Entregue
-      return [badgeDefinitions.Enviada, badgeDefinitions.Entregue];
-    case 4: // Lida
-      return [
-        badgeDefinitions.Enviada,
-        badgeDefinitions.Entregue,
-        badgeDefinitions.Lida,
-      ];
+function renderBadgeIcon(name: string) {
+  const iconProps = { className: 'w-4 h-4' };
+
+  switch (name) {
+    case 'check':
+      return <CheckCircle {...iconProps} />;
+    case 'eye':
+      return <Eye {...iconProps} />;
+    case 'alert':
+      return <AlertCircle {...iconProps} />;
+    case 'error':
+      return <XCircle {...iconProps} />;
     default:
-      return [badgeDefinitions.Desconhecido];
+      return <HelpCircle {...iconProps} />;
   }
 }
 
@@ -108,7 +57,7 @@ export default function RecentMessagesCard({ recentMessages }: RecentMessagesCar
       <CardContent>
         <div className="space-y-3">
           {recentMessages.map((message) => {
-            const badgesToShow = getBadgesForStatus(message.status);
+            const badgesToShow: BadgeInfo[] = getBadgesForStatus(message.status);
 
             return (
               <div
@@ -138,7 +87,7 @@ export default function RecentMessagesCard({ recentMessages }: RecentMessagesCar
                       variant="outline"
                       className={`flex items-center gap-1 ${badge.colorClass} ${badge.borderClass}`}
                     >
-                      {badge.icon}
+                      {renderBadgeIcon(badge.icon)}
                       {badge.text}
                     </Badge>
                   ))}
