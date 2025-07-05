@@ -33,13 +33,13 @@ function UserMenu() {
     return (
       <>
         <Link
-          href="/pricing"
+          href="/sign-in"
           className="text-sm font-medium text-gray-700 hover:text-gray-900"
         >
-          Pricing
+          Entrar
         </Link>
         <Button asChild className="rounded-full">
-          <Link href="/sign-up">Sign Up</Link>
+          <Link href="/sign-up">Criar conta</Link>
         </Button>
       </>
     );
@@ -83,8 +83,8 @@ function Header() {
     <header className="border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center">
-          <CircleIcon className="h-6 w-6 text-orange-500" />
-          <span className="ml-2 text-xl font-semibold text-gray-900">ACME</span>
+          <CircleIcon className="h-6 w-6 text-green-500" />
+          <span className="ml-2 text-xl font-semibold text-gray-900">MK-MESSENGER</span>
         </Link>
         <div className="flex items-center space-x-4">
           <Suspense fallback={<div className="h-9" />}>

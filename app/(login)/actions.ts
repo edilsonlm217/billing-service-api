@@ -65,7 +65,7 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 
   if (userWithTeam.length === 0) {
     return {
-      error: 'Invalid email or password. Please try again.',
+      error: 'Email ou senha inválidos. Por favor, tente novamente.',
       email,
       password
     };
@@ -80,7 +80,7 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 
   if (!isPasswordValid) {
     return {
-      error: 'Invalid email or password. Please try again.',
+      error: 'Email ou senha inválidos. Por favor, tente novamente.',
       email,
       password
     };
